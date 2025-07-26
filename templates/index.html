@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonicSync - AI Playlist Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            padding-top: 50px;
+        }
+        
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        
+        .input-group-lg .form-control {
+            border-radius: 50px 0 0 50px;
+            border: 2px solid #e9ecef;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+        }
+        
+        .input-group-lg .btn {
+            border-radius: 0 50px 50px 0;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .progress {
+            height: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 15px;
+        }
+        
+        .track-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .track-item h6 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .track-item small {
+            color: #666;
+        }
+        
+        .status-icon {
+            font-size: 1.2rem;
+        }
+        
+        .status-success {
+            color: #28a745;
+        }
+        
+        .status-error {
+            color: #dc3545;
+        }
+        
+        .status-pending {
+            color: #ffc107;
+        }
+        
+        .feature-box {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        
+        .mood-analysis {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .alert {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        #loadingSpinner {
+            display: none;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="main-card">
+                    <div class="logo">
+                        <h1><i class="fas fa-music"></i> SonicSync</h1>
+                        <p>AI-Powered Spotify Playlist Downloader</p>
+                    </div>
+                    
+                    <form id="playlistForm">
+                        <div class="input-group input-group-lg mb-3">
+                            <input type="url" class="form-control" id="playlistUrl" 
+                                   placeholder="Paste your Spotify playlist URL here..." required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-download"></i> Analyze & Download
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mb-3">
+                            <small class="text-muted">
+                                💡 <strong>Tip:</strong> Use public Spotify playlists for best results. 
+                                Press <kbd>Ctrl+Enter</kbd> to quickly submit.
+                            </small>
+                        </div>
+                        
+                        <div class="text-center mb-3">
+                            <details class="d-inline-block">
+                                <summary class="text-muted" style="cursor: pointer;">
+                                    <small>🔗 Need an example? Click here</small>
+                                </summary>
+                                <div class="mt-2">
+                                    <small class="text-muted d-block">Try these example playlists:</small>
+                                    <div class="btn-group-vertical btn-group-sm mt-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                onclick="fillExampleUrl('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M')">
+                                            🎵 Today's Top Hits
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                onclick="fillExampleUrl('https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd')">
+                                            🎸 RapCaviar
+                                        </button>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </form>
+                    
+                    <div id="loadingSpinner" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Analyzing your playlist...</p>
+                    </div>
+                    
+                    <div id="alertContainer"></div>
+                    
+                    <div id="playlistInfo" style="display: none;">
+                        <div class="mood-analysis">
+                            <h5><i class="fas fa-brain"></i> AI Mood Analysis</h5>
+                            <p id="moodDescription"></p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Detected Mood:</strong> <span id="moodType"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Confidence:</strong> <span id="moodConfidence"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5><i class="fas fa-list"></i> Playlist Tracks</h5>
+                            <button class="btn btn-success" id="downloadBtn">
+                                <i class="fas fa-download"></i> Download All
+                            </button>
+                        </div>
+                        
+                        <div id="tracksList"></div>
+                        
+                        <div id="downloadProgress" style="display: none;">
+                            <h6>Download Progress</h6>
+                            <div class="progress">
+                                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p class="mt-2" id="progressText">Preparing download...</p>
+                        </div>
+                        
+                        <div id="downloadResult" style="display: none;">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle"></i> Download Complete!</h6>
+                                <p id="downloadSummary"></p>
+                                <a href="#" id="downloadLink" class="btn btn-primary">
+                                    <i class="fas fa-file-archive"></i> Download ZIP File
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Features Section -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h5>AI-Powered Matching</h5>
+                            <p>Advanced AI algorithms find the best matching songs from available sources.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h5>Fast Processing</h5>
+                            <p>Lightning-fast playlist analysis and intelligent batch downloading.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-archive"></i>
+                            </div>
+                            <h5>ZIP Download</h5>
+                            <p>Get all your songs neatly packaged in a single ZIP file for easy download.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTracks = [];
+        let downloadInProgress = false;
+        
+        document.getElementById('playlistForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (downloadInProgress) {
+                showAlert('warning', 'A download is already in progress. Please wait.');
+                return;
+            }
+            
+            const playlistUrl = document.getElementById('playlistUrl').value;
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const playlistInfo = document.getElementById('playlistInfo');
+            const alertContainer = document.getElementById('alertContainer');
+            
+            // Show loading spinner
+            loadingSpinner.style.display = 'block';
+            playlistInfo.style.display = 'none';
+            alertContainer.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ playlist_url: playlistUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentTracks = data.tracks;
+                    displayPlaylistInfo(data);
+                    
+                    // Show success message
+                    showAlert('success', 
+                        `Successfully analyzed ${data.total_tracks} tracks! ` + 
+                        `Detected mood: ${data.mood_analysis?.mood || 'unknown'}`
+                    );
+                } else {
+                    showAlert('error', data.error || 'Failed to analyze playlist');
+                }
+            } catch (error) {
+                showAlert('error', 'Network error: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', async function() {
+            if (downloadInProgress) {
+                showAlert('warning', 'Download already in progress!');
+                return;
+            }
+            
+            downloadInProgress = true;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+            
+            const playlistUrl = document.getElementById('playlistUrl').value;
+            const downloadProgress = document.getElementById('downloadProgress');
+            const downloadResult = document.getElementById('downloadResult');
+            
+            downloadProgress.style.display = 'block';
+            downloadResult.style.display = 'none';
+            
+            try {
+                // Start download
+                updateProgress(0, currentTracks.length, 'Starting download...');
+                
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ playlist_url: playlistUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateProgress(data.total_tracks, data.total_tracks, 'Download complete!');
+                    setTimeout(() => displayDownloadResult(data), 1000);
+                } else {
+                    showAlert('error', data.error || 'Failed to download playlist');
+                    downloadProgress.style.display = 'none';
+                }
+            } catch (error) {
+                showAlert('error', 'Network error: ' + error.message);
+                downloadProgress.style.display = 'none';
+            } finally {
+                downloadInProgress = false;
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-download"></i> Download All';
+            }
+        });
+        
+        function displayPlaylistInfo(data) {
+            const playlistInfo = document.getElementById('playlistInfo');
+            const tracksList = document.getElementById('tracksList');
+            
+            // Display mood analysis
+            if (data.mood_analysis) {
+                document.getElementById('moodType').textContent = 
+                    (data.mood_analysis.mood || 'Unknown').charAt(0).toUpperCase() + 
+                    (data.mood_analysis.mood || 'unknown').slice(1);
+                document.getElementById('moodConfidence').textContent = 
+                    Math.round((data.mood_analysis.confidence || 0) * 100) + '%';
+                document.getElementById('moodDescription').textContent = 
+                    data.mood_analysis.description || 'No description available';
+            }
+            
+            // Display tracks
+            tracksList.innerHTML = '';
+            data.tracks.forEach((track, index) => {
+                const trackElement = document.createElement('div');
+                trackElement.className = 'track-item';
+                trackElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${escapeHtml(track.name)}</h6>
+                            <small class="text-muted">
+                                by ${escapeHtml(track.artist)} • 
+                                ${track.album ? escapeHtml(track.album) : 'Unknown Album'} • 
+                                ${formatDuration(track.duration_ms)}
+                            </small>
+                        </div>
+                        <div class="status-icon status-pending" id="status-${index}">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                `;
+                tracksList.appendChild(trackElement);
+            });
+            
+            playlistInfo.style.display = 'block';
+        }
+        
+        function displayDownloadResult(data) {
+            const downloadProgress = document.getElementById('downloadProgress');
+            const downloadResult = document.getElementById('downloadResult');
+            const downloadSummary = document.getElementById('downloadSummary');
+            const downloadLink = document.getElementById('downloadLink');
+            
+            downloadProgress.style.display = 'none';
+            
+            const successRate = Math.round((data.successful_downloads / data.total_tracks) * 100);
+            
+            downloadSummary.innerHTML = `
+                <strong>Download Summary:</strong><br>
+                ✅ Successfully downloaded: ${data.successful_downloads} songs<br>
+                ❌ Failed downloads: ${data.failed_downloads} songs<br>
+                📊 Success rate: ${successRate}%<br>
+                💾 Total tracks processed: ${data.total_tracks}
+            `;
+            
+            if (data.download_url && data.successful_downloads > 0) {
+                downloadLink.href = data.download_url;
+                downloadLink.style.display = 'inline-block';
+                downloadLink.innerHTML = `
+                    <i class="fas fa-file-archive"></i> 
+                    Download ZIP (${data.zip_filename})
+                `;
+            } else {
+                downloadLink.style.display = 'none';
+            }
+            
+            downloadResult.style.display = 'block';
+        }
+        
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-success';
+            const icon = type === 'error' ? 'fa-exclamation-triangle' : 
+                        type === 'warning' ? 'fa-exclamation-circle' : 'fa-check-circle';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show">
+                    <i class="fas ${icon}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-dismiss success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = alertContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.classList.remove('show');
+                        setTimeout(() => alertContainer.innerHTML = '', 150);
+                    }
+                }, 5000);
+            }
+        }
+        
+        function updateProgress(current, total, message) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            const percentage = Math.round((current / total) * 100);
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressText.textContent = message || `Processing ${current} of ${total}...`;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDuration(durationMs) {
+            if (!durationMs) return '0:00';
+            const minutes = Math.floor(durationMs / 60000);
+            const seconds = Math.floor((durationMs % 60000) / 1000);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Add some example URLs for users
+        function fillExampleUrl(url) {
+            document.getElementById('playlistUrl').value = url;
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('playlistForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
